@@ -1,0 +1,69 @@
+{
+    "manifest_version": 3,
+    "name": "MovieHub Sync",
+    "version": "1.0.1",
+    "description": "Watch Netflix, Prime, YouTube and more in sync with friends",
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://www.netflix.com/*",
+        "https://www.primevideo.com/*",
+        "https://www.amazon.com/gp/video/*",
+        "https://www.disneyplus.com/*",
+        "https://www.youtube.com/*",
+        "https://www.hotstar.com/*",
+        "https://www.hbomax.com/*",
+        "https://www.hulu.com/*",
+        "https://*.ngrok-free.app/*"
+    ],
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.netflix.com/*",
+                "https://www.primevideo.com/*",
+                "https://www.amazon.com/gp/video/*",
+                "https://www.disneyplus.com/*",
+                "https://www.youtube.com/*",
+                "https://www.hotstar.com/*",
+                "https://www.hbomax.com/*",
+                "https://www.hulu.com/*"
+            ],
+            "js": [
+                "content/content.js"
+            ],
+            "css": [
+                "content/overlay.css"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "lib/socket.io.min.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MovieHub</title>
+  <meta name="description" content="A private screening room for two. Drop a film and watch it together, in sync.">
+  <meta name="theme-color" content="#0c0b0a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M11 7 6 12l5 5M6.5 12H18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-fwd" viewBox="0 0 24 24"><path d="m13 7 5 5-5 5M17.5 12H6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-vol" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="m16 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.2a2.3 2.3 0 1 0 0 3.6M17 10.2a2.3 2.3 0 1 0 0 3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 17h-8l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3.5h8l4 4v13H6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3.5v4h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <!-- ============ LOBBY ============ -->
+  <main id="lobby" class="lobby">
+    <header class="lobby-top">
+      <span class="wordmark">MovieHub</span>
+      <span class="meta">Private screenings · est. 2026</span>
+    </header>
+
+    <section class="lobby-body">
+      <div class="lobby-copy">
+        <p class="eyebrow">A screening room for two</p>
+        <h1>Watch the same film,<br><em>miles apart.</em></h1>
+        <p class="lede">Drop a movie from your computer and it starts playing at once. Your friend sees it live in their browser. Nothing gets uploaded.</p>
+
+        <form id="lobby-form" class="lobby-form" autocomplete="off">
+          <label class="field">
+            <span>Your name</span>
+            <input id="name-input" maxlength="24" placeholder="What should they call you?" required>
+          </label>
+
+          <div id="join-invite" class="invite" hidden>
+            <span class="invite-label">You've been invited to room</span>
+            <span id="invite-code" class="mono"></span>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="primary-btn" class="btn btn-primary">Open a room</button>
+            <div id="code-join" class="code-join">
+              <input id="code-input" class="mono" maxlength="6" placeholder="CODE" aria-label="Room code">
+              <button type="button" id="join-btn" class="btn btn-ghost">Join</button>
+            </div>
+          </div>
+          <p id="lobby-error" class="form-error" role="alert"></p>
+        </form>
+      </div>
+
+      <ol class="steps">
+        <li><span class="mono">01</span><div><h3>Drop a file</h3><p>It plays straight from your disk. No waiting for uploads.</p></div></li>
+        <li><span class="mono">02</span><div><h3>Send the link</h3><p>One other person can join. The room closes when you both leave.</p></div></li>
+        <li><span class="mono">03</span><div><h3>Watch together</h3><p>They get a live stream from you. If they have the same file, they drop it in for full quality, and the two copies stay in sync.</p></div></li>
+      </ol>
+    </section>
+
+    <footer class="lobby-foot">
+      <span>The film streams directly between your two browsers.</span>
+      <span class="mono">Space · ← → · F · M · C</span>
+    </footer>
+  </main>
+
+  <!-- ============ ROOM ============ -->
+  <main id="room" class="room" hidden>
+    <section id="stage" class="stage" data-state="empty">
+      <video id="video" playsinline></video>
+      <div id="subs" class="subs" aria-live="off"></div>
+
+      <header class="stage-top">
+        <button id="leave-btn" class="chip" title="Leave room">
+          <svg><use href="#i-back"/></svg><span>Leave</span>
+        </button>
+        <div class="title-block">
+          <span id="film-title" class="film-title"></span>
+          <span id="film-status" class="film-status"></span>
+        </div>
+        <button id="invite-btn" class="chip" title="Copy invite link">
+          <svg><use href="#i-link"/></svg><span class="mono" id="room-code">——————</span>
+        </button>
+      </header>
+
+      <!-- Nothing playing yet -->
+      <div id="empty" class="empty">
+        <div class="empty-frame">
+          <p id="empty-eyebrow" class="eyebrow">Reel one</p>
+          <h2 id="empty-title">Drop a film anywhere</h2>
+          <p id="empty-sub" class="empty-sub">It plays from your disk the moment you let go.</p>
+          <button id="choose-btn" class="btn btn-primary"><svg><use href="#i-file"/></svg><span id="choose-label">Choose a file</span></button>
+          <p class="empty-note">MP4 or WebM with H.264 / AAC plays everywhere. Drop a .srt or .vtt to add subtitles.</p>
+        </div>
+      </div>
+
+      <!-- Centre notice: connecting, waiting, tap for sound -->
+      <div id="notice" class="notice" hidden>
+        <div class="notice-inner">
+          <span id="notice-spin" class="spin" hidden></span>
+          <p id="notice-text"></p>
+          <button id="notice-btn" class="btn btn-primary" hidden></button>
+        </div>
+      </div>
+
+      <!-- Hint to upgrade from stream to own copy -->
+      <button id="own-copy" class="own-copy" hidden>
+        <svg><use href="#i-file"/></svg>
+        <span>Have this film too? <u>Use your copy</u> for full quality.</span>
+      </button>
+
+      <div id="controls" class="controls">
+        <div id="scrub" class="scrub" role="slider" aria-label="Seek" tabindex="0">
+          <div class="scrub-track"><div id="scrub-buf" class="scrub-buf"></div><div id="scrub-fill" class="scrub-fill"></div></div>
+          <div id="scrub-knob" class="scrub-knob"></div>
+          <div id="scrub-tip" class="scrub-tip mono"></div>
+        </div>
+        <div class="bar">
+          <div class="bar-left">
+            <button id="play-btn" class="ctl ctl-lg" title="Play (Space)"><svg><use href="#i-play"/></svg></button>
+            <button id="back-btn" class="ctl" title="Back 10s (←)"><span class="mono">−10</span></button>
+            <button id="fwd-btn" class="ctl" title="Forward 10s (→)"><span class="mono">+10</span></button>
+            <div class="vol">
+              <button id="mute-btn" class="ctl" title="Mute (M)"><svg><use href="#i-vol"/></svg></button>
+              <input id="vol" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+            </div>
+            <span class="time mono"><span id="t-cur">0:00</span><span class="t-sep">/</span><span id="t-dur">0:00</span></span>
+          </div>
+          <div class="bar-right">
+            <span id="sync" class="sync"><i></i><span id="sync-text"></span></span>
+            <button id="cc-btn" class="ctl" title="Subtitles"><svg><use href="#i-cc"/></svg></button>
+            <button id="chat-btn" class="ctl" title="Chat (C)"><svg><use href="#i-chat"/></svg><i id="unread" class="dot" hidden></i></button>
+            <button id="full-btn" class="ctl" title="Fullscreen (F)"><svg><use href="#i-full"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toasts" class="toasts" aria-live="polite"></div>
+    </section>
+
+    <aside id="side" class="side">
+      <div class="side-head">
+        <h2>In the room</h2>
+        <button id="side-close" class="ctl" title="Close"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <ul id="people" class="people"></ul>
+      <div class="side-rule"><span>Conversation</span></div>
+      <div id="messages" class="messages"></div>
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <input id="chat-input" maxlength="1000" placeholder="Say something…">
+        <button class="send" title="Send">↵</button>
+      </form>
+    </aside>
+  </main>
+
+  <div id="dropveil" class="dropveil" hidden>
+    <div class="dropveil-inner">
+      <p class="eyebrow">Release</p>
+      <h2 id="dropveil-text">to start the film</h2>
+    </div>
+  </div>
+
+  <div id="ask" class="ask" hidden>
+    <div class="ask-card">
+      <h3 id="ask-title"></h3>
+      <p id="ask-text"></p>
+      <div class="ask-actions">
+        <button id="ask-no" class="btn btn-ghost"></button>
+        <button id="ask-yes" class="btn btn-primary"></button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept="video/*,.mkv,.srt,.vtt" hidden>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

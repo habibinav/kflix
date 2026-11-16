@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MovieHub - Watch Together</title>
+  <meta name="description" content="Watch movies with friends in sync - shared movie playback">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- User Setup Modal -->
+  <div id="user-setup-modal" class="modal hidden">
+    <div class="modal-content glass">
+      <h2>👋 Set Up Your Profile</h2>
+      <p>Choose a nickname and avatar before joining</p>
+
+      <div class="setup-form">
+        <label for="nickname-input">Nickname</label>
+        <input type="text" id="nickname-input" placeholder="Enter your nickname" maxlength="20" autocomplete="off">
+
+        <label>Choose Avatar</label>
+        <div class="avatar-grid" id="avatar-grid">
+          <button class="avatar-btn selected" data-avatar="🎬">🎬</button>
+          <button class="avatar-btn" data-avatar="🍿">🍿</button>
+          <button class="avatar-btn" data-avatar="🎥">🎥</button>
+          <button class="avatar-btn" data-avatar="📺">📺</button>
+          <button class="avatar-btn" data-avatar="🎞️">🎞️</button>
+          <button class="avatar-btn" data-avatar="🎭">🎭</button>
+          <button class="avatar-btn" data-avatar="🌟">🌟</button>
+          <button class="avatar-btn" data-avatar="🚀">🚀</button>
+          <button class="avatar-btn" data-avatar="🔥">🔥</button>
+          <button class="avatar-btn" data-avatar="💎">💎</button>
+          <button class="avatar-btn" data-avatar="🎮">🎮</button>
+          <button class="avatar-btn" data-avatar="🎧">🎧</button>
+        </div>
+
+        <button id="setup-continue-btn" class="btn btn-primary">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- Lobby View -->
+    <div id="lobby-view" class="view active">
+      <div class="hero">
+        <div class="logo">
+          <span class="logo-icon">🎬</span>
+          <h1>MovieHub</h1>
+        </div>
+        <p class="tagline">Watch movies with friends in <span class="highlight">sync</span></p>
+      </div>
+
+      <div class="card-container">
+        <div class="card glass">
+          <h2>Host a Screening</h2>
+          <p>Start a private screening room and invite a friend</p>
+          <button id="create-room-btn" class="btn btn-primary">
+            <span class="btn-icon">🎬</span>
+            Host a Screening
+          </button>
+        </div>
+
+        <div class="divider">
+          <span>or join one</span>
+        </div>
+
+        <div class="card glass">
+          <h2>Join a Screening</h2>
+          <p>Enter the room code shared by your friend</p>
+          <div class="input-group">
+            <input type="text" id="room-code-input" placeholder="ENTER CODE" maxlength="6" autocomplete="off">
+            <button id="join-room-btn" class="btn btn-secondary">
+              <span class="btn-icon">🚀</span>
+              Join
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screening Room View (replaces transfer-view + watch-view) -->
+    <div id="screening-view" class="view">
+      <div class="screening-container" id="screening-container">
+
+        <!-- Room Header -->
+        <div class="room-header" id="room-header">
+          <button id="leave-room-btn" class="btn-icon-only" title="Leave room">← Back</button>
+          <div class="room-info">
+            <span class="label">Room</span>
+            <span id="display-room-code" class="room-code">------</span>
+            <button id="copy-code-btn" class="btn-icon-only" title="Copy code">📋</button>
+            <button id="copy-link-btn" class="btn btn-secondary btn-sm" title="Copy link">Copy Link</button>
+          </div>
+        </div>
+
+        <!-- Video Area -->
+        <div class="video-wrapper" id="video-wrapper">
+          <!-- Host: File Drop Zone (shown before file is selected) -->
+          <div id="host-drop-zone" class="drop-zone-overlay hidden">
+            <div class="drop-zone-content">
+              <span class="drop-icon">📁</span>
+              <p>Upload your film here</p>
+              <span class="drop-hint">MP4 (H.264/AAC) or WebM · click to browse</span>
+              <span class="drop-subtitle-hint">Add subtitles · .vtt, .srt</span>
+            </div>
+            <input type="file" id="file-input" accept="video/*" hidden>
+          </div>
+
+          <!-- Guest: Waiting Message (shown before host starts) -->
+          <div id="guest-waiting" class="waiting-overlay hidden">
+            <div class="spinner"></div>
+            <p>Waiting for the host…</p>
+            <span class="waiting-hint">The screening will begin shortly</span>
+          </div>
+
+          <!-- Video Player -->
+          <video id="video-player" playsinline>
+            Your browser doesn't support video playback.
+          </video>
+
+          <!-- Emoji Reaction Overlay -->
+          <div id="reaction-overlay" class="reaction-overlay"></div>
+
+          <!-- WebRTC Connection Quality -->
+          <div id="webrtc-quality" class="webrtc-quality" style="display:none;">
+            <div class="quality-dot"></div>
+            <span class="quality-label">Connecting...</span>
+          </div>
+
+          <!-- Video Overlay (click to play) -->
+          <div class="video-overlay" id="video-overlay">
+            <div class="overlay-message" id="overlay-message">
+              <span class="overlay-icon">▶️</span>
+              <span class="overlay-text">Click to play</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Bar -->
+        <div class="controls-bar glass" id="controls-bar">
+          <div class="controls-left">
+            <button id="skip-back-btn" class="control-btn" title="Skip back 5s">-5s</button>
+            <button id="play-pause-btn" class="control-btn">▶️</button>
+            <button id="skip-forward-btn" class="control-btn" title="Skip forward 5s">+5s</button>
+            <div class="time-display">
+              <span id="current-time">0:00</span>
+              <span class="time-separator">/</span>
+              <span id="duration">0:00</span>
+            </div>
+          </div>
+
+          <div class="controls-center">
+            <input type="range" id="seek-bar" class="seek-bar" value="0" min="0" max="100" step="0.1">
+          </div>
+
+          <div class="controls-right">
+            <div class="sync-indicator" id="sync-indicator">
+              <div class="sync-dot synced"></div>
+              <span>In Sync</span>
+            </div>
+            <input type="file" id="subtitle-input" accept=".srt,.vtt" style="display: none;">
+            <button id="subtitle-btn" class="control-btn" title="Add Subtitles">🔤</button>
+            <button id="toggle-chat-btn" class="control-btn" title="Toggle Chat">💬</button>
+            <button id="theatre-btn" class="control-btn" title="Theatre Mode">🎬</button>
+            <button id="fullscreen-btn" class="control-btn" title="Fullscreen">⛶</button>
+            <button id="leave-watch-btn" class="control-btn leave-btn" title="Leave Room">🚪</button>
+          </div>
+        </div>
+
+        <!-- Audience Panel -->
+        <div class="audience-panel" id="audience-panel">
+          <h3>Audience</h3>
+          <div class="audience-list" id="audience-list">
+            <div class="audience-empty">Waiting for connections…</div>
+          </div>
+        </div>
+
+        <!-- Chat Sidebar -->
+        <div id="chat-sidebar" class="chat-sidebar hidden">
+          <div class="chat-header">
+            <h3>💬 Chat</h3>
+            <button id="close-chat-btn" class="btn-close">✕</button>
+          </div>
+
+          <div class="participants-bar" id="participants-bar">
+            <!-- Participant avatars will be injected here -->
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <!-- Messages will appear here -->
+          </div>
+
+          <div class="chat-reactions">
+            <button class="reaction-btn" data-emoji="👍">👍</button>
+            <button class="reaction-btn" data-emoji="❤️">❤️</button>
+            <button class="reaction-btn" data-emoji="😂">😂</button>
+            <button class="reaction-btn" data-emoji="🎉">🎉</button>
+            <button class="reaction-btn" data-emoji="🔥">🔥</button>
+            <button class="reaction-btn" data-emoji="😮">😮</button>
+          </div>
+
+          <div class="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+            <button id="send-chat-btn" class="btn btn-primary">Send</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
