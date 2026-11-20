@@ -56,8 +56,11 @@ async function tmdb(pathname, params = {}) {
   const url = new URL(TMDB_API + pathname);
   for (const [k, v] of Object.entries(params)) if (v != null && v !== '') url.searchParams.set(k, v);
   const headers = { accept: 'application/json' };
-  if (process.env.TMDB_READ_TOKEN) headers.authorization = `Bearer ${process.env.TMDB_READ_TOKEN}`;
-  else url.searchParams.set('api_key', process.env.TMDB_API_KEY);
+  // TMDB hands out two credentials: a short v3 API key and a long v4 Read Access
+  // Token (a JWT, starts with "eyJ"). Accept either one in either variable.
+  const cred = String(process.env.TMDB_READ_TOKEN || process.env.TMDB_API_KEY || '').trim();
+  if (cred.startsWith('eyJ')) headers.authorization = `Bearer ${cred}`;
+  else url.searchParams.set('api_key', cred);
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(6000) });
   if (!res.ok) throw new Error(`TMDB ${res.status}`);
   return res.json();
@@ -86,7 +89,7 @@ app.get('/api/posters', async (req, res) => {
         seen.add(m.id);
         out.push({ title: m.title, year: (m.release_date || '').slice(0, 4), poster: `/api/img/w342${m.poster_path}` });
       }
-      if (!out.length) throw new Error('no posters');
+      if (!out.length) throw lists.find(l => l.status === 'rejected')?.reason || new Error('no posters');
       return out;
     });
     res.set('Cache-Control', 'public, max-age=3600');
