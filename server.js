@@ -206,6 +206,14 @@ function newCode() {
   return code;
 }
 
+const VALID_CODE = new RegExp(`^[${CODE_CHARS}]{6}$`);
+
+function openRoom(code) {
+  const created = { code, createdAt: Date.now(), members: new Map(), sourceId: null, movie: null, playback: { time: 0, paused: true, at: Date.now() }, subtitles: null, messages: [] };
+  rooms.set(code, created);
+  return created;
+}
+
 const cleanName = name => String(name || '').replace(/\s+/g, ' ').trim().slice(0, 24) || 'Guest';
 
 function currentPlayback(room) {
@@ -290,16 +298,17 @@ io.on('connection', socket => {
   socket.on('create', (data, cb) => {
     cb = ack(cb);
     if (room) return cb({ ok: false, error: 'Already in a room.' });
-    const code = newCode();
-    const created = { code, createdAt: Date.now(), members: new Map(), sourceId: null, movie: null, playback: { time: 0, paused: true, at: Date.now() }, subtitles: null, messages: [] };
-    rooms.set(code, created);
-    enter(created, data?.name, cb);
+    enter(openRoom(newCode()), data?.name, cb);
   });
 
   socket.on('join', (data, cb) => {
     cb = ack(cb);
     if (room) return cb({ ok: false, error: 'Already in a room.' });
-    const target = rooms.get(String(data?.code || '').trim().toUpperCase());
+    const code = String(data?.code || '').trim().toUpperCase();
+    let target = rooms.get(code);
+    // Rooms live in memory, so a server restart wipes them. Someone refreshing back
+    // into a room they were in gets it reopened under the same code.
+    if (!target && data?.resume && VALID_CODE.test(code)) target = openRoom(code);
     if (!target) return cb({ ok: false, error: 'No room with that code. It may have closed.' });
     enter(target, data?.name, cb);
   });

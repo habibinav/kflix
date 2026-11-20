@@ -201,10 +201,20 @@ function setupLobby() {
 }
 
 // A refresh inside a room drops you straight back in.
+// The tab remembers its room (sessionStorage); the browser also remembers the last
+// room for a few hours, so reopening a closed tab on its ?r= link works too.
+const RESUME_MS = 12 * 60 * 60 * 1000;
+function rememberRoom(code) {
+  store.sset('mh-room', code);
+  store.set('mh-last-room', code ? JSON.stringify({ code, at: Date.now() }) : '');
+}
 function resumeRoom() {
   const code = (new URLSearchParams(location.search).get('r') || '').toUpperCase();
-  const resume = store.sget('mh-room');
-  if (resume && me.name && (!code || code === resume)) enterRoom('join', resume, { quiet: true });
+  let last = null;
+  try { last = JSON.parse(store.get('mh-last-room') || 'null'); } catch {}
+  const recent = last && Date.now() - last.at < RESUME_MS ? last.code : null;
+  const resume = store.sget('mh-room') || (code && code === recent ? code : null);
+  if (resume && me.name && (!code || code === resume)) enterRoom('join', resume, { quiet: true, resume: true });
 }
 
 // Resolves once we have an identity and a live socket; the lobby is usable before that.
@@ -212,7 +222,7 @@ let markReady;
 const ready = new Promise(r => { markReady = r; });
 
 let entering = false;
-async function enterRoom(kind, code, { quiet = false } = {}) {
+async function enterRoom(kind, code, { quiet = false, resume = false } = {}) {
   const name = el.nameInput.value.trim() || me.name;
   if (!name && !quiet) { el.lobbyError.textContent = 'Add your name so your friend knows who you are.'; el.nameInput.focus(); return; }
   me.name = name || 'Guest';
@@ -222,15 +232,15 @@ async function enterRoom(kind, code, { quiet = false } = {}) {
   el.primaryBtn.disabled = true;
   try { await ready; } finally { entering = false; el.primaryBtn.disabled = false; }
   el.lobbyError.textContent = '';
-  const res = kind === 'create' ? await emit('create', { name: me.name }) : await emit('join', { code, name: me.name });
+  const res = kind === 'create' ? await emit('create', { name: me.name }) : await emit('join', { code, name: me.name, resume });
   if (!res?.ok) {
-    store.sset('mh-room', null);
+    rememberRoom(null);
     if (!quiet) el.lobbyError.textContent = res?.error || 'Could not reach the room.';
     return;
   }
   iceServers = res.iceServers || [];
   relayOn = !!res.relay;
-  store.sset('mh-room', res.room.code);
+  rememberRoom(res.room.code);
   history.replaceState(null, '', '?r=' + res.room.code);
   el.lobby.hidden = true;
   el.room.hidden = false;
@@ -245,11 +255,21 @@ async function enterRoom(kind, code, { quiet = false } = {}) {
 }
 
 async function rejoin() {
-  const res = await emit('join', { code: room.code, name: me.name });
+  const wasSource = isSource();
+  const res = await emit('join', { code: room.code, name: me.name, resume: true });
   if (!res?.ok) { toast(esc(res?.error || 'The room closed.')); leave(); return; }
   iceServers = res.iceServers || iceServers;
   relayOn = !!res.relay;
   onRoom(res.room);
+  // The server restarted and reopened the room empty: put our film back on where we were.
+  if (wasSource && localFile && !res.room.movie) {
+    const at = video.currentTime, paused = video.paused;
+    const again = await emit('movie', { name: prettyTitle(localFile.name), size: localFile.size, duration: video.duration });
+    if (again?.room) {
+      socket.emit('control', { action: paused ? 'pause' : 'play', time: at });
+      onRoom(again.room);
+    }
+  }
 }
 
 function leave() {
@@ -258,7 +278,7 @@ function leave() {
   closePc(true);
   clearSource();
   localFile = null; captured = null; room = null; clearSubtitles(); setSubPanel(false);
-  store.sset('mh-room', null);
+  rememberRoom(null);
   history.replaceState(null, '', location.pathname);
   el.room.hidden = true;
   el.lobby.hidden = false;
